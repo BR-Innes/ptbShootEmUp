@@ -40,6 +40,7 @@ screens = Screen('Screens');
 scr.number = max(screens);
 scr.foreground = WhiteIndex(scr.number);
 scr.background = BlackIndex(scr.number);
+% scr.background = [0, 0, 0.2]; 
 [scr.window, scr.windowRect] = PsychImaging('OpenWindow', scr.number, scr.background);
 [scr.width, scr.height] = Screen('WindowSize', scr.window);
 [scr.cenX, scr.cenY] = RectCenter(scr.windowRect);
@@ -51,6 +52,7 @@ scr.waitFrames = 1;
 ctrls.esc = KbName('ESCAPE');
 
 %~ Star Variables
+stars.size = 3; 
 stars.ratio = pixPercent; 
 stars.movePerFrame = pixSpeed; % pixels
 stars.startState = rand(scr.width, scr.height); 
@@ -89,7 +91,7 @@ while exitDemo == false
     end 
     
     %~ Flip
-    Screen('DrawDots', scr.window, stars.pattern, 1, [255 255 255]);
+    Screen('DrawDots', scr.window, stars.pattern, stars.size, [255 255 255]);
     scr.vbl  = Screen('Flip', scr.window, scr.vbl + (scr.waitFrames - 0.5) * scr.ifi);
     stars.pattern(2, :) = stars.pattern(2, :) - stars.movePerFrame;
     
