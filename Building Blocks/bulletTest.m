@@ -1,14 +1,11 @@
-function moveSquare 
-%% moveSquare 
-% A mod of Peter Scarfe's tutorial to allow the square to move on a diagonal
-% if you hold down two directional keys. 
-% Reference: http://peterscarfe.com/keyboardsquaredemo.html
+function bulletTest 
 
 %~ Clear the workspace and the screen
 sca;
 close all;
 clearvars;
 myGraphicsTimingSucksMode = true; 
+KbName('UnifyKeyNames'); 
 
 %~ Skip sync if using laptop (graphics card issues) 
 if myGraphicsTimingSucksMode
@@ -32,11 +29,11 @@ scr.waitFrames = [];
 scr.exit = false; 
 
 %~ Square Variables
-sqr.size = [0 0 100 100];
-sqr.cenX = []; 
-sqr.cenY = []; 
-sqr.colour = [255, 0, 0]; 
-sqr.centered = []; 
+cir.size = [0 0 100 100];
+cir.cenX = []; 
+cir.cenY = []; 
+cir.colour = [255, 0, 0]; 
+cir.centered = []; 
 
 %~ Controls 
 % For diagonal movement I sort the key combinations because find gives you
@@ -46,12 +43,16 @@ ctrls.esc = KbName('ESCAPE');
 ctrls.up = KbName('UpArrow');
 ctrls.down = KbName('DownArrow');
 ctrls.left = KbName('LeftArrow');
-ctrls.right = KbName('RightArrow'); 
+ctrls.right = KbName('RightArrow');
+ctrls.fire = KbName('SPACE'); 
 ctrls.leftUp = sort([ctrls.left, ctrls.up]); 
 ctrls.rightUp = sort([ctrls.right, ctrls.up]); 
 ctrls.leftDown = sort([ctrls.left, ctrls.down]); 
 ctrls.rightDown = sort([ctrls.right, ctrls.down]);
-ctrls.movePerPress = 10; % pixels 
+ctrls.movePerPress = 10; % pixels
+
+%~Bullets
+bullets.XY = []; 
 
 %~ PTB Setup 
 PsychDefaultSetup(2);
@@ -66,9 +67,9 @@ scr.background = BlackIndex(scr.number);
 [scr.cenX, scr.cenY] = RectCenter(scr.windowRect);
 scr.ifi = Screen('GetFlipInterval', scr.window);
 
-%~ Square Setup
-sqr.cenX = scr.cenX;
-sqr.cenY = scr.cenY;
+%~ Circle Setup
+cir.cenX = scr.cenX;
+cir.cenY = scr.cenY;
 
 %~ Sync
 scr.vbl = Screen('Flip', scr.window);
@@ -77,6 +78,8 @@ scr.waitFrames = 1;
 %~ Priority Set 
 topPriorityLevel = MaxPriority(scr.window);
 Priority(topPriorityLevel);
+bullets.refractory = 10; 
+bullets.refractoryC = 10; 
 
 %~ Animation Loop 
 while scr.exit == false 
@@ -89,55 +92,69 @@ while scr.exit == false
         if pressedKeys == ctrls.esc
             scr.exit = true;
         elseif pressedKeys == ctrls.left
-            sqr.cenX = sqr.cenX - ctrls.movePerPress;
+            cir.cenX = cir.cenX - ctrls.movePerPress;
         elseif pressedKeys == ctrls.right
-            sqr.cenX = sqr.cenX + ctrls.movePerPress;
+            cir.cenX = cir.cenX + ctrls.movePerPress;
         elseif pressedKeys == ctrls.up
-            sqr.cenY = sqr.cenY - ctrls.movePerPress;
+            cir.cenY = cir.cenY - ctrls.movePerPress;
         elseif pressedKeys == ctrls.down
-            sqr.cenY = sqr.cenY + ctrls.movePerPress;
+            cir.cenY = cir.cenY + ctrls.movePerPress;
+        elseif pressedKeys == ctrls.fire && bullets.refractoryC >= bullets.refractory
+            bullets.newBullet = [cir.cenX, cir.cenY]; 
+            bullets.XY = [bullets.XY; bullets.newBullet];
+            bullets.refractoryC = 1; 
         end 
     elseif length(pressedKeys) == 2
         if pressedKeys == ctrls.leftUp
-            sqr.cenX = sqr.cenX - ctrls.movePerPress;
-            sqr.cenY = sqr.cenY - ctrls.movePerPress;
+            cir.cenX = cir.cenX - ctrls.movePerPress;
+            cir.cenY = cir.cenY - ctrls.movePerPress;
         elseif pressedKeys == ctrls.leftDown
-            sqr.cenX = sqr.cenX - ctrls.movePerPress;
-            sqr.cenY = sqr.cenY + ctrls.movePerPress;
+            cir.cenX = cir.cenX - ctrls.movePerPress;
+            cir.cenY = cir.cenY + ctrls.movePerPress;
         elseif pressedKeys == ctrls.rightUp
-            sqr.cenX = sqr.cenX + ctrls.movePerPress;
-            sqr.cenY = sqr.cenY - ctrls.movePerPress;
+            cir.cenX = cir.cenX + ctrls.movePerPress;
+            cir.cenY = cir.cenY - ctrls.movePerPress;
         elseif pressedKeys == ctrls.rightDown
-            sqr.cenX = sqr.cenX + ctrls.movePerPress;
-            sqr.cenY = sqr.cenY + ctrls.movePerPress;
+            cir.cenX = cir.cenX + ctrls.movePerPress;
+            cir.cenY = cir.cenY + ctrls.movePerPress;
         end 
     end 
 
     %~ Eccentricity checks
-    if sqr.cenX < 0
-        sqr.cenX = 0;
-    elseif sqr.cenX > scr.width
-        sqr.cenX = scr.width;
+    if cir.cenX < 0
+        cir.cenX = 0;
+    elseif cir.cenX > scr.width
+        cir.cenX = scr.width;
     end
 
-    if sqr.cenY < 0
-        sqr.cenY = 0;
-    elseif sqr.cenY > scr.height
-        sqr.cenY = scr.height;
+    if cir.cenY < 0
+        cir.cenY = 0;
+    elseif cir.cenY > scr.height
+        cir.cenY = scr.height;
     end
 
-    %~ Replot square 
-    sqr.centered = CenterRectOnPointd(sqr.size, sqr.cenX, sqr.cenY);
+    %~ Replot circle 
+    cir.centered = CenterRectOnPointd(cir.size, cir.cenX, cir.cenY);
 
-    %~ Draw
-    Screen('FillRect', scr.window, sqr.colour, sqr.centered);
+    %~ Delete bullets that have moved too high to the bottom
+    if isempty(bullets.XY) == 0 
+        bullets.XY = [bullets.XY(:, 1), bullets.XY(:, 2) - 10];
+        bullets.delete = bullets.XY(:, 2) <= 0;
+        bullets.XY(bullets.delete, :) = [];  
+        if isempty(bullets.XY) == 0
+            Screen('DrawDots', scr.window, bullets.XY', 4, [255 255 255]);
+        end 
+    end 
 
     %~ Flip 
-    Screen('FillRect', scr.window, sqr.colour, sqr.centered);
+    Screen('FillOval', scr.window, cir.colour, cir.centered);
     scr.vbl  = Screen('Flip', scr.window, scr.vbl + (scr.waitFrames - 0.5) * scr.ifi);
+    
+    bullets.refractoryC = bullets.refractoryC + 1; 
     
 end
 
 %~ Clear screen
 sca;
+
 end 
