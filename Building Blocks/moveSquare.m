@@ -70,23 +70,21 @@ scr.ifi = Screen('GetFlipInterval', scr.window);
 sqr.cenX = scr.cenX;
 sqr.cenY = scr.cenY;
 
-% Sync us and get a time stamp
+%~ Sync
 scr.vbl = Screen('Flip', scr.window);
 scr.waitFrames = 1;
 
-% Maximum priority level
+%~ Priority Set 
 topPriorityLevel = MaxPriority(scr.window);
 Priority(topPriorityLevel);
 
-% Loop the animation until the escape key is pressed
+%~ Animation Loop 
 while scr.exit == false 
    
-    % Check the keyboard to see if a button has been pressed
+    %~ Check Keys 
     [~,~,keyCode] = KbCheck;
     pressedKeys = find(keyCode); 
     
-    % Depending on the button press, either move ths position of the square
-    % or exit the demo
     if length(pressedKeys) == 1
         if pressedKeys == ctrls.esc
             scr.exit = true;
@@ -115,8 +113,7 @@ while scr.exit == false
         end 
     end 
 
-    % We set bounds to make sure our square doesn't go completely off of
-    % the screen
+    %~ Eccentricity checks
     if sqr.cenX < 0
         sqr.cenX = 0;
     elseif sqr.cenX > scr.width
@@ -129,18 +126,18 @@ while scr.exit == false
         sqr.cenY = scr.height;
     end
 
-    % Center the rectangle on the centre of the screen
+    %~ Replot square 
     sqr.centered = CenterRectOnPointd(sqr.size, sqr.cenX, sqr.cenY);
 
-    % Draw the rect to the screen
+    %~ Draw
     Screen('FillRect', scr.window, sqr.colour, sqr.centered);
 
-    % Flip to the screen
+    %~ Flip 
     Screen('FillRect', scr.window, sqr.colour, sqr.centered);
     scr.vbl  = Screen('Flip', scr.window, scr.vbl + (scr.waitFrames - 0.5) * scr.ifi);
     
 end
 
-% Clear the screen
+%~ Clear screen
 sca;
 end 
