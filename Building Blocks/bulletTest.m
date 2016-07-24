@@ -35,6 +35,8 @@ cir.cenY = [];
 cir.colour = [255, 0, 0]; 
 cir.centered = []; 
 
+
+
 %~ Controls 
 % For diagonal movement I sort the key combinations because find gives you
 % them in order, and it's important for evaluating whether the key combos
