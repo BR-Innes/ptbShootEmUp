@@ -188,11 +188,23 @@ end
 
 play(themeH);
 stars.movePerFrame = pixSpeed*2; 
+ctrls.fire = KbName('SPACE'); 
+
+%~Bullets
+bullets.XY = []; 
+bullets.refractory = 10; 
+bullets.refractoryC = 10; 
 
 while startGame == true && exitMain == false; 
      %~ Check keys
     [~, ~, keyCode] = KbCheck;
     pressedKeys = find(keyCode); 
+    
+    if ismember(ctrls.fire, pressedKeys) == true && bullets.refractoryC >= bullets.refractory
+        bullets.newBullet = [cir.cenX, cir.cenY]; 
+        bullets.XY = [bullets.XY; bullets.newBullet];
+        bullets.refractoryC = 1; 
+    end 
 
     if length(pressedKeys) == 1
         if pressedKeys == ctrls.esc
@@ -205,6 +217,10 @@ while startGame == true && exitMain == false;
             cir.cenY = cir.cenY - ctrls.movePerPress;
         elseif pressedKeys == ctrls.down
             cir.cenY = cir.cenY + ctrls.movePerPress;
+%         elseif pressedKeys == ctrls.fire && bullets.refractoryC >= bullets.refractory
+%             bullets.newBullet = [cir.cenX, cir.cenY]; 
+%             bullets.XY = [bullets.XY; bullets.newBullet];
+%             bullets.refractoryC = 1; 
         end 
     elseif length(pressedKeys) == 2
         if pressedKeys == ctrls.leftUp
@@ -235,6 +251,7 @@ while startGame == true && exitMain == false;
         cir.cenY = scr.height;
     end
    
+    
     %~ Relocate dots that have moved too high to the bottom
     stars.patternMiD = stars.pattern(2, :) <= 0;
     if isempty(stars.patternMiD) == 0 
@@ -245,9 +262,18 @@ while startGame == true && exitMain == false;
     %~ Flip
     Screen('DrawDots', scr.window, stars.pattern, stars.size, [255 255 255]);
     cir.centered = CenterRectOnPointd(cir.size, cir.cenX, cir.cenY);
-    Screen('FillOval', scr.window, txt.titleColour, cir.centered);   
+    if isempty(bullets.XY) == 0 
+        bullets.XY = [bullets.XY(:, 1), bullets.XY(:, 2) - 10];
+        bullets.delete = bullets.XY(:, 2) <= 0;
+        bullets.XY(bullets.delete, :) = [];  
+        if isempty(bullets.XY) == 0
+            Screen('DrawDots', scr.window, bullets.XY', 4, [255 0 0]);
+        end 
+    end 
+    Screen('FillOval', scr.window, txt.titleColour, cir.centered);  
     scr.vbl  = Screen('Flip', scr.window, scr.vbl + (scr.waitFrames - 0.5) * scr.ifi);
-    stars.pattern(2, :) = stars.pattern(2, :) - stars.movePerFrame;  
+    stars.pattern(2, :) = stars.pattern(2, :) - stars.movePerFrame; 
+    bullets.refractoryC = bullets.refractoryC + 1; 
 end 
 
 %~ Clear
