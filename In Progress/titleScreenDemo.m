@@ -1,14 +1,24 @@
 function titleScreenDemo
-
-pixPercent = 0.0001; 
-pixSpeed = 3; 
+%% titleScreenDemo
+% "I bet he's never written a parallax sprite starfield sine scrolly 
+% bob demo with soundtracker music in his life" 
+% ------------------------------------------------------------------
+% A Fudgy Demo 
+% Written by Bibbly x (24/07/16)
+% 
+% CONTROLS
+% Move: Arrow Keys
+% Fire: Space
+% Quit: Escape
+%-------------------------------------------------------------------
 
 %~ Clear the workspace and the screen
 sca;
 close all;
-myGraphicsTimingSucksMode = true; 
 
 %~ Skip sync if using laptop (graphics card issues) 
+myGraphicsTimingSucksMode = true; 
+
 if myGraphicsTimingSucksMode
     Screen('Preference', 'SkipSyncTests', 1);
     Screen('Preference','SuppressAllWarnings', 1);
@@ -34,8 +44,7 @@ PsychDefaultSetup(2);
 screens = Screen('Screens');
 scr.number = max(screens);
 scr.foreground = WhiteIndex(scr.number);
-scr.background = BlackIndex(scr.number);
-% scr.background = [0, 0, 0.2]; 
+scr.background = BlackIndex(scr.number); 
 [scr.window, scr.windowRect] = PsychImaging('OpenWindow', scr.number, scr.background);
 [scr.width, scr.height] = Screen('WindowSize', scr.window);
 [scr.cenX, scr.cenY] = RectCenter(scr.windowRect);
@@ -43,7 +52,7 @@ scr.ifi = Screen('GetFlipInterval', scr.window);
 scr.vbl = Screen('Flip', scr.window);
 scr.waitFrames = 1;
 
-%~Controls
+%~ Controls
 ctrls.esc = KbName('ESCAPE');
 ctrls.space = KbName('SPACE');
 ctrls.up = KbName('UpArrow');
@@ -58,40 +67,72 @@ ctrls.movePerPress = 10; % pixels
 
 %~ Star Variables
 stars.size = 4; 
-stars.ratio = pixPercent; 
-stars.movePerFrame = pixSpeed; % pixels
+stars.ratio = 0.0001; 
+stars.movePerFrame = 3; % pixels
 stars.startState = rand(scr.width, scr.height); 
 stars.startPattern = stars.startState < stars.ratio; 
 stars.xCs = []; 
 stars.yCs = []; 
 [stars.xCs, stars.yCs] = ind2sub([scr.width, scr.height], find(stars.startPattern));
 stars.pattern = []; 
-stars.pattern = [stars.xCs'; stars.yCs']; 
-stars.angle = 30; 
-stars.alpha = (stars.angle/stars.angle) * (pi/180);  
+stars.pattern = [stars.xCs'; stars.yCs'];  
+stars.colour = [1, 1, 1]; 
 
-
-%~ Title 
+%~ Text
+txt.font = Screen('TextFont', scr.window, 'Joystix');
+% Title
 txt.titleText = 'RDK DESTROYER'; 
 txt.titleColour = [0.1 0.1 0.4];
-txt.minorColour = [1 1 1];
-txt.size = Screen('TextSize', scr.window, 30);
-txt.font = Screen('TextFont', scr.window, 'Joystix');
-
-%~ Text Setup
-txt.mX = 0; 
-txt.mY = 0; 
-txt.minorText = ['Game & Music by Bibbly (' num2str(2016) ')'];
-txt.pressStart = 'PRESS SPACE'; 
+txt.titleSize = 130;
+txt.titleShrinkIncrement = 2; 
+% Credit
+txt.creditText = ['Game & Music by Bibbly (' num2str(2016) ')'];
+txt.creditSize = 30; 
+txt.creditX = 0; 
+txt.creditY = 0;
+txt.creditColour = [1 1 1];
+% Press Space
+txt.pressSpace = 'PRESS SPACE'; 
+txt.pressSpaceSize = 30;
+txt.pressSpaceColour = [1 1 1];
+txt.pressSpaceY = scr.cenY + 200; 
+% Thanks 
+txt.thanks = 'THANKS FOR PLAYING!'; 
+txt.thanksSize = 80;
+txt.thanksColour = [0.1 0.1 0.4];  
 
 %~ Circle Setup
-cir.size = [0 0 0 0];
+cir.size = [0, 0, 0, 0];
 cir.cenX = []; 
 cir.cenY = []; 
-cir.colour = [255, 0, 0]; 
+cir.colour = [0.1 0.1 0.4]; 
 cir.centered = []; 
 cir.cenX = scr.cenX;
 cir.cenY = scr.cenY;
+cir.growIncrement = 2;
+cir.maxSize = 40; 
+
+%~Bullets
+bullets.XY = []; 
+bullets.refractory = 10; 
+bullets.refractoryC = 10; 
+bullets.movePerFrame = 10; 
+bullets.colour = [255, 0, 0]; 
+bullets.size = 7; 
+
+%~ Demo Times
+demoT.themeLength = 68;
+demoT.titleLength = 232; 
+demoT.blank = 1; 
+demoT.showThanks = 2; 
+demoT.all = demoT.blank*2 + demoT.showThanks;
+
+%~ Read in .wav files
+[yTitle, FsTitle] = audioread('title.wav');
+titleH = audioplayer(yTitle, FsTitle);
+
+[yTheme, FsTheme] = audioread('theme.wav');
+themeH = audioplayer(yTheme, FsTheme);
 
 %~ Priority set 
 topPriorityLevel = MaxPriority(scr.window);
@@ -99,39 +140,35 @@ Priority(topPriorityLevel);
 Screen('BlendFunction', scr.window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 
 %~ Find good text placement (lower right)  
+Screen('TextSize', scr.window, txt.creditSize);
 [~, ~, txt.scoreBounds] = DrawFormattedText...
-    (scr.window, txt.minorText, scr.width-txt.mX, scr.height-txt.mY, txt.minorColour); 
+    (scr.window, txt.creditText, scr.width-txt.creditX, scr.height-txt.creditY, txt.creditColour); 
 while txt.scoreBounds(3) >= scr.width || txt.scoreBounds(4) >= scr.height
     if  txt.scoreBounds(3) >= scr.width
-        txt.mX = txt.mX + 10; 
+        txt.creditX = txt.creditX + 10; 
     elseif txt.scoreBounds(4) >= scr.height
-        txt.mY = txt.mY + 10; 
+        txt.creditY = txt.creditY + 10; 
     end 
     [~, ~, txt.scoreBounds] = DrawFormattedText...
-        (scr.window, txt.minorText, scr.width-txt.mX, scr.height-txt.mY, txt.minorColour); 
+        (scr.window, txt.creditText, scr.width-txt.creditX, scr.height-txt.creditY, txt.creditColour); 
 end 
 
 %~ Cover up the test text 
 Screen('FillRect', scr.window, scr.background, scr.windowRect);
 
-%~ Initiate demo
+%~ Flags
 exitDemo = false;
-startGame = false; 
-textGone = false; 
-exitMain = false; 
-%~ Sound Start
-[y, Fs] = audioread('title.wav');
-titleH = audioplayer(y, Fs);
+startGame = false;  
+exitMain = false;
+
+%~ Counters
+counterAfterPress = 0; 
+counterIncrement = 3; 
+
+%~ Play title theme
 play(titleH); 
 
-[y2, Fs2] = audioread('theme.wav');
-themeH = audioplayer(y2, Fs2);
-
-textChange = 130; 
-sizeInc = 2; 
-counter = 0; 
-
-%~ Animation loop 
+%~ TITLE: Animation loop 
 while exitDemo == false
     %~ Check keys
     [~, ~, keyCode] = KbCheck;
@@ -153,54 +190,46 @@ while exitDemo == false
     end 
     
     %~ Flip
-    Screen('DrawDots', scr.window, stars.pattern, stars.size, [255 255 255]);
-    Screen('TextSize', scr.window, 30);
+    Screen('DrawDots', scr.window, stars.pattern, stars.size, stars.colour);
     if startGame == false
-        DrawFormattedText(scr.window, txt.pressStart, 'center', (scr.height/2)+200, txt.minorColour);
-        DrawFormattedText(scr.window, txt.minorText, scr.width-txt.mX, scr.height-txt.mY, txt.minorColour);
+        Screen('TextSize', scr.window, txt.pressSpaceSize);
+        DrawFormattedText(scr.window, txt.pressSpace, 'center', txt.pressSpaceY, txt.creditColour);
+        Screen('TextSize', scr.window, txt.creditSize);
+        DrawFormattedText(scr.window, txt.creditText, scr.width-txt.creditX, scr.height-txt.creditY, txt.creditColour);
     end 
-    Screen('TextSize', scr.window, textChange-counter);
+    Screen('TextSize', scr.window, txt.titleSize-counterAfterPress);
     DrawFormattedText(scr.window, txt.titleText, 'center', 'center', txt.titleColour);
     if startGame == 1 
-        if counter >= textChange 
-            textGone = true;
-            if cir.size(3) > sizeInc * 30
+        if counterAfterPress >= txt.titleSize
+            if cir.size(3) > cir.growIncrement * cir.maxSize
                 stop(titleH);
                 exitDemo = true; 
             else 
-                cir.size(3:4) = cir.size(3:4) + sizeInc;
+                cir.size(3:4) = cir.size(3:4) + txt.titleShrinkIncrement;
             end 
             cir.centered = CenterRectOnPointd(cir.size, cir.cenX, cir.cenY);
-            Screen('FillOval', scr.window, txt.titleColour, cir.centered);   
+            Screen('FillOval', scr.window, cir.colour, cir.centered);   
         else
-            counter = counter + 3; 
+            counterAfterPress = counterAfterPress + counterIncrement; 
         end 
     end 
     scr.vbl  = Screen('Flip', scr.window, scr.vbl + (scr.waitFrames - 0.5) * scr.ifi);
+    stars.pattern(2, :) = stars.pattern(2, :) - stars.movePerFrame; 
     
-    if textGone == true
-        % rotation code here?
-        stars.pattern(2, :) = stars.pattern(2, :) - stars.movePerFrame;  
-    else 
-        stars.pattern(2, :) = stars.pattern(2, :) - stars.movePerFrame;  
-    end 
 end
 
+%~ Change music and make stars go fast
 play(themeH);
-stars.movePerFrame = pixSpeed*2; 
-ctrls.fire = KbName('SPACE'); 
+stars.movePerFrame = stars.movePerFrame*2; 
+timeGameDemoStart = GetSecs; 
 
-%~Bullets
-bullets.XY = []; 
-bullets.refractory = 10; 
-bullets.refractoryC = 10; 
-
+%~ GAME: Animation loop 
 while startGame == true && exitMain == false; 
      %~ Check keys
     [~, ~, keyCode] = KbCheck;
     pressedKeys = find(keyCode); 
     
-    if ismember(ctrls.fire, pressedKeys) == true && bullets.refractoryC >= bullets.refractory
+    if ismember(ctrls.space, pressedKeys) == true && bullets.refractoryC >= bullets.refractory
         bullets.newBullet = [cir.cenX, cir.cenY]; 
         bullets.XY = [bullets.XY; bullets.newBullet];
         bullets.refractoryC = 1; 
@@ -217,10 +246,6 @@ while startGame == true && exitMain == false;
             cir.cenY = cir.cenY - ctrls.movePerPress;
         elseif pressedKeys == ctrls.down
             cir.cenY = cir.cenY + ctrls.movePerPress;
-%         elseif pressedKeys == ctrls.fire && bullets.refractoryC >= bullets.refractory
-%             bullets.newBullet = [cir.cenX, cir.cenY]; 
-%             bullets.XY = [bullets.XY; bullets.newBullet];
-%             bullets.refractoryC = 1; 
         end 
     elseif length(pressedKeys) == 2
         if pressedKeys == ctrls.leftUp
@@ -251,7 +276,6 @@ while startGame == true && exitMain == false;
         cir.cenY = scr.height;
     end
    
-    
     %~ Relocate dots that have moved too high to the bottom
     stars.patternMiD = stars.pattern(2, :) <= 0;
     if isempty(stars.patternMiD) == 0 
@@ -260,23 +284,37 @@ while startGame == true && exitMain == false;
     end 
     
     %~ Flip
-    Screen('DrawDots', scr.window, stars.pattern, stars.size, [255 255 255]);
+    Screen('DrawDots', scr.window, stars.pattern, stars.size, stars.colour);
     cir.centered = CenterRectOnPointd(cir.size, cir.cenX, cir.cenY);
     if isempty(bullets.XY) == 0 
-        bullets.XY = [bullets.XY(:, 1), bullets.XY(:, 2) - 10];
+        bullets.XY = [bullets.XY(:, 1), bullets.XY(:, 2) - bullets.movePerFrame];
         bullets.delete = bullets.XY(:, 2) <= 0;
         bullets.XY(bullets.delete, :) = [];  
         if isempty(bullets.XY) == 0
-            Screen('DrawDots', scr.window, bullets.XY', 4, [255 0 0]);
+            Screen('DrawDots', scr.window, bullets.XY', bullets.size, bullets.colour);
         end 
     end 
-    Screen('FillOval', scr.window, txt.titleColour, cir.centered);  
+    Screen('FillOval', scr.window, cir.colour, cir.centered);     
     scr.vbl  = Screen('Flip', scr.window, scr.vbl + (scr.waitFrames - 0.5) * scr.ifi);
     stars.pattern(2, :) = stars.pattern(2, :) - stars.movePerFrame; 
     bullets.refractoryC = bullets.refractoryC + 1; 
+    
+    if GetSecs > timeGameDemoStart + demoT.themeLength-demoT.all; 
+        Screen('TextSize', scr.window, txt.thanksSize);
+        Screen('Flip', scr.window); 
+        WaitSecs(demoT.blank);
+        DrawFormattedText(scr.window, txt.thanks, 'center', 'center', txt.thanksColour);
+        Screen('Flip', scr.window); 
+        WaitSecs(demoT.showThanks);
+        Screen('Flip', scr.window);
+        WaitSecs(demoT.blank); 
+        exitMain = true; 
+    end 
 end 
 
 %~ Clear
 sca;
 stop(titleH); 
+stop(themeH);
+
 end 

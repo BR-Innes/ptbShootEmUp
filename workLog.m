@@ -8,7 +8,7 @@
 % O~ BB: Find a way to loop .wav files 
 % O~ BB: Work on a enemy/hitbox test
 
-%%  23/07/16
+%% 23/07/16
 % Work on 'Building Blocks' for the game: 
 % 1. Fixed up the movement to allow diagonal movement ('moveSquare.m') 
 % 2. Draw starry background ('starfieldBackground.m')
@@ -19,5 +19,13 @@
 
 % A lot of problems trying to loop the audio; not able to use 'play(handle)' in a loop
 % Will look into PTB solution 
+
+%% 24/07/16
+% Worked on the titleScreenDemo; shows how the title screen will be
+% animated. 
+% Plays all songs, and allows the sprite move/shoot. 
+
+% Also tested some basic features of drawing sprites (draw as textures,
+% doesn't draw transparent sections as white!). 
 
 %% 
